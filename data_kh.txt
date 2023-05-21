@@ -1,9 +1,9 @@
-stk,pin,sd,vohieuhoa
-11,10,7,0
-22,20,1,0
-33,30,2,0
-44,40,4,0
-55,50,7,0
-65,60,7,0
-75,70,7,1
-85,80,7,0
+stk,pin,sd,vohieuhoa,hoten
+11,10,7,0,TRAN THI A
+22,20,1,0,TRAN THI B
+33,30,2,0,TRAN VAN A
+44,40,4,0,TRAN THI C
+55,50,7,0,TRAN DUC O
+65,60,7,0,TRAN BAO P
+75,70,7,1,NGUYEN VAN L
+85,80,7,0,PHAN BOI C

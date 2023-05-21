@@ -8,11 +8,13 @@
 //define global
 #define MAX_CHUOI_KI_TU 100
 #define VND 1000
+#define MIN_DANG_KY 4
+#define MAX_DANG_KY 64
 
 //define nhap file
 #define MAX_KH  100
 #define KH_FILE_IN "data_kh.txt"
-#define MAX_TRUONG 5
+#define MAX_TRUONG 10
 
 //define phia khach hang
 #define MAX_CODE 10
@@ -24,6 +26,8 @@
 #define RANDOM 10000
 
 //define in bang
+#define DANG_KY_MOI "|------------------------- LUU Y KHI TAO TAI KHOAN NGAN HANG ---------------------\n|                                                                                |\n|  Vui long dien chinh xac thong tin ve ho ten                                   |\n|                                                                                |\n|  So tai khoan va ma PIN la cac ky tu so, toi thieu 6 ki tu, toi da 64 ky tu    |\n|                                                                                |\n|  Vui long ghi nho so tai khoan va ma PIN sau khi nhap de tranh khoa tai khoan  |\n|                                                                                |\n|--------------------------------------------------------------------------------\n"
+
 #define CLRSCR "\e[1;1H\e[2J"
 #define CHIEU_DAI_BANG 78
 
@@ -58,7 +62,6 @@ typedef struct
 }LICH_SU_GIAO_DICH;
 
 
-typedef char   inform1[20];
 typedef char   inform2[MAX_CHUOI_KI_TU];
 typedef double inform3;
 typedef char   inform4[MAX_CHUOI_KI_TU]; //pin o day la mat khau dang nhap
@@ -69,7 +72,7 @@ typedef double inform6;  //Danh cho mapin
 //khoi tao cust
 struct cust
 {
-	inform1 ht;
+	char ho_ten[MAX_CHUOI_KI_TU];
 	inform2 stk;
 	inform4 pin;
 	inform5 sodu;
@@ -79,6 +82,9 @@ struct cust
     LICH_SU_GIAO_DICH bay_gio[GIOI_HAN_GIAO_DICH_1_NGAY];
 	struct cust *next;
 }; 
+
+//func toan cuc
+int manHinhChao();
 
 //func kh: tao ten list
 typedef struct cust *list;
@@ -92,7 +98,7 @@ int SL_KH = 0; // so luong khach hang
 void InThongTin1KH(list valid); // in thong tin LSGD va thong tin tai khoan
 list TaoDSLKnull(); // tao DSLK rong
 int Strcmp(char from_list[MAX_CHUOI_KI_TU], char input[MAX_CHUOI_KI_TU]); //so sanh 2 chuoi ky tu
-list XacThuc(); // dang nhap
+void dangNhap(); // dang nhap
 int menuChinh(list in);
 int cophaiSo(char in[MAX_CHUOI_KI_TU]); // kiem tra chuoi co phai la so
 void doiSoDu(list in, int status); // nap tien, rut tien
@@ -110,6 +116,15 @@ void inLS(LICH_SU_GIAO_DICH bay_gio); // in thong tin giao dich 1 khach hang
 //func in man hinh
 void inCHUY(const char * chu_y); // in ra man hinh canh bao + yeu cau nhan ENTER de tiep tuc
 
+//func dang ky moi tai khoan
+void dangKy();
+int xacthucDangKy(char ho_ten[MAX_CHUOI_KI_TU], char stk[MAX_CHUOI_KI_TU], char pin[MAX_CHUOI_KI_TU]);
+int trunglapDangKy(char stk[MAX_CHUOI_KI_TU], char pin[MAX_CHUOI_KI_TU]);
+void INHOAten(char in[MAX_CHUOI_KI_TU]);
+
+//func xuat file
+void xuatFileKH();
+
 int main(void)
 {
     if(nhapFile() == -1)
@@ -118,14 +133,14 @@ int main(void)
         return -1;
     }
 
-    XacThuc();
-    return 0;
+    manHinhChao();
 }
 
 void InThongTin1KH(list hop_le)
 {
     if (hop_le == NULL) return;
     
+    printf("Ho va Ten chu tai khoan: %s\n", hop_le->ho_ten);
     printf(KHUNG_THONG_TIN_KHACH_HANG, hop_le->stk, (int)(hop_le->sodu) * VND);
     
     printf(DASH_LICH_SU);
@@ -151,45 +166,41 @@ list TaoDSLKnull()
     return NULL;
 }
 
-list XacThuc()
+void dangNhap()
 {
     // printf(CLRSCR);
     char in_acc[MAX_CHUOI_KI_TU]; char in_PIN[MAX_CHUOI_KI_TU];
     
-    list ptr = NULL;
+    list ptr = f;
     
-    while(1)
-    {    
-        printf(DANG_NHAP_HEADER);
-        printf(DANG_NHAP_TK); 
-        fgets(in_acc, MAX_CHUOI_KI_TU, stdin);
+    printf(DANG_NHAP_HEADER);
 
-        printf(DANG_NHAP_PIN);
-        fgets(in_PIN, MAX_CHUOI_KI_TU, stdin);
+    printf(DANG_NHAP_TK); 
+    fgets(in_acc, MAX_CHUOI_KI_TU, stdin);
 
-        ptr = f;
-        int _ = 0;
-        while (ptr != NULL)
+    printf(DANG_NHAP_PIN);
+    fgets(in_PIN, MAX_CHUOI_KI_TU, stdin);
+
+    while (ptr != NULL)
+    {
+        if(Strcmp(ptr->stk, in_acc) && Strcmp(ptr->pin, in_PIN))
         {
-            if(Strcmp(ptr->stk, in_acc) && Strcmp(ptr->pin, in_PIN))
+            if (ptr->vohieuhoa) 
             {
-                if (ptr->vohieuhoa) 
-                {
-                    //neu tai khoan bi vo hieu hoa -> khong cho vao
-                    printf(TAI_KHOAN_TAM_KHOA);
-                    XacThuc();
-                }
-                _ = 1;
-                menuChinh(ptr);
-                break;
+                //neu tai khoan bi vo hieu hoa -> khong cho vao
+                printf(TAI_KHOAN_TAM_KHOA);
+                manHinhChao();
             }
-            else ptr = ptr->next;
+            menuChinh(ptr);
+            break;
         }
-        if (_ == 1) break;
-        inCHUY("Cu phap khong hop le");
+        else ptr = ptr->next;
     }
-    return ptr;
+    inCHUY("Cu phap khong hop le");
+    manHinhChao();
+    return;
 }
+
 
 // kiem tra input nhap vao voi du lieu trong DS LK
 // 1 == true; 0 == false
@@ -240,7 +251,7 @@ int menuChinh(list in)
         case 1: doiSoDu(in, 0);
         case 2: doiSoDu(in, 1);
         case 3: InThongTin1KH(in);
-        case 4: XacThuc();
+        case 4: manHinhChao();
     }
     return 0;
 }
@@ -326,7 +337,7 @@ void doiSoDu(list in, int status)
     {
         printf(TAI_KHOAN_TAM_KHOA);
         in->vohieuhoa = 1;
-        XacThuc();
+        manHinhChao();
     }
 
     //xac nhan giao dich
@@ -386,6 +397,7 @@ void themDLsangDSLK(char input_info[MAX_TRUONG][MAX_CHUOI_KI_TU])
 
     tmp->sodu = atof(input_info[2]);
     tmp->vohieuhoa = atof(input_info[3]);
+    strcpy(tmp->ho_ten, input_info[4]);
 
     tmp->han_muc_giao_dich = GIOI_HAN_GIAO_DICH_1_NGAY - 1;
 
@@ -530,4 +542,144 @@ void inCHUY(const char * chu_y)
 
     printf("|                                                                                |\n|  Vui long nhan ENTER de nhap lai                                               |\n|                                                                                |\n|--------------------------------------------------------------------------------\n");
     fgetc(stdin);
+}
+
+void dangKy()
+{
+    char input_info[MAX_TRUONG][MAX_CHUOI_KI_TU];
+    
+    printf(DANG_KY_MOI);
+
+        printf("Nhap HO VA TEN: "); fgets(input_info[4], MAX_CHUOI_KI_TU, stdin);
+        printf("Nhap STK (4 - 64 ky tu): "); fgets(input_info[0], MAX_CHUOI_KI_TU, stdin);
+        printf("Nhap PIN (4 - 64 ky tu): "); fgets(input_info[1], MAX_CHUOI_KI_TU, stdin);
+        
+        // bo "\n" sau len gets
+        input_info[0][strcspn(input_info[0], "\n")] = 0;
+        input_info[1][strcspn(input_info[1], "\n")] = 0;
+        input_info[4][strcspn(input_info[4], "\n")] = 0;
+
+        if(xacthucDangKy(input_info[4], input_info[0], input_info[1]))
+        {
+            //so du  = 0
+            strcpy(input_info[2], "0");
+            //vo hieu hoa = 0
+            strcpy(input_info[3], "0");
+
+            INHOAten(input_info[4]);
+
+            themDLsangDSLK(input_info);
+            printf(CLRSCR);
+            printf("Tai khoan tao thanh cong!\nNhan Enter de quay ve MENU\n");
+            fgetc(stdin);
+        }
+        manHinhChao();
+}
+
+int xacthucDangKy(char ho_ten[MAX_CHUOI_KI_TU], char stk[MAX_CHUOI_KI_TU], char pin[MAX_CHUOI_KI_TU])
+{
+    //kiem tra ten tai khoan
+    for (int kiem_tra_chu = 0; kiem_tra_chu < strlen(ho_ten) - 1; ++kiem_tra_chu)
+    {
+        if(!isalpha(ho_ten[kiem_tra_chu]) && !isblank(ho_ten[kiem_tra_chu]))
+        {
+            inCHUY("Ten khong phu hop");
+            return 0;
+        }
+    }
+    // kiem tra do dai, ky tu cua STK
+    if(strlen(stk) > MAX_DANG_KY || strlen(stk) < MIN_DANG_KY || cophaiSo(stk) == 0)
+    {
+        inCHUY("So tai khoan khong phu hop");
+        return 0;
+    } 
+    // kiem tra do dai, ky tu cua PIN
+    if(strlen(pin) > MAX_DANG_KY || strlen(pin) < MIN_DANG_KY || cophaiSo(pin) == 0)
+    {
+        inCHUY("Ma PIN khong phu hop");
+        return 0;
+    }
+
+    if(trunglapDangKy(stk, pin) == 0)
+    {
+        inCHUY("STK/ma PIN bi trung");
+        return 0;
+    }
+    return 1;
+}
+
+//kiem tra thong tin co bi trung lap hay khong
+int trunglapDangKy(char stk[MAX_CHUOI_KI_TU], char pin[MAX_CHUOI_KI_TU])
+{
+    list verify = f;
+
+    while(verify != NULL && strcmp(stk, verify->stk) != 0 && strcmp(pin, verify->pin) != 0)
+    {
+        verify = verify->next;
+    }
+    return verify == NULL;
+}
+
+int manHinhChao()
+{
+    // printf(CLRSCR);
+    int choose;
+    do
+    {
+        printf("1. Dang nhap\n");
+        printf("2. Dang ky\n");
+        printf("3. (Admin): tat may\n");
+
+        printf("\nLua chon: ");
+        char option[5];
+        fgets(option, 5, stdin);
+        choose = atoi(option);
+        if (strlen(option) <= 2 && strlen(option) > 0 && choose >= 1 && choose <= 3) break;
+
+        inCHUY("Cu phap khong hop le");
+        printf(CLRSCR);
+    }
+
+    while(1);
+    printf("\n");
+
+    switch(choose)
+    {
+        case 1: dangNhap();
+        case 2: dangKy();
+        case 3:
+         xuatFileKH();
+         return 1;
+    }
+    return 0;
+}
+
+void xuatFileKH()
+{
+    list out = f; 
+    FILE * thoat; thoat = freopen(KH_FILE_IN, "w", stdout);
+
+    printf("stk,pin,sd,vohieuhoa,hoten\n");
+    while (out != NULL)
+    {
+        printf("%s,%s,%.f,%i,%s\n", out->stk, out->pin, out->sodu, out->vohieuhoa, out->ho_ten);
+        out = out->next;
+    }
+
+    fclose(thoat);
+    return;
+}
+
+void INHOAten(char in[MAX_CHUOI_KI_TU])
+{
+    char tmp[MAX_CHUOI_KI_TU];
+    int i;
+
+    for(i = 0; i < strlen(in); i++)
+    {
+       tmp[i] = toupper(in[i]);
+    }
+
+    tmp[i] = '\0';
+    strcpy(in, tmp);
 }
